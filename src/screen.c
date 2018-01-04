@@ -47,15 +47,20 @@ unsigned int position_abs (unsigned int row_p, unsigned int col_p) {
 
 /* Draws the pixel using global vars row and col */
 void paint (unsigned int *buf, unsigned int color) {
+    paint_pos (buf, row, col, color);
+}
+
+void draw (unsigned int *buf, unsigned int pos, unsigned int color) {
+    *(buf + pos) = color;
+}
+
+/* Draws the pixel to the screen at position pos */
+void paint_pos (unsigned int *buf, unsigned int row,
+                unsigned int col, unsigned int color) {
     unsigned int d_row;
     unsigned int d_col;
 
     for (d_row = 0; d_row < scale; d_row++)
         for (d_col = 0; d_col < scale; d_col++)
-            paint_pos (buf, position_abs (row + d_row, col + d_col), color);
-}
-
-/* Draws the pixel to the screen at position pos */
-void paint_pos (unsigned int *buf, unsigned int pos, unsigned int color) {
-    *(buf + pos) = color;
+            draw (buf, position_abs (row + d_row, col + d_col), color);
 }

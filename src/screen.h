@@ -37,6 +37,7 @@ unsigned int position_abs (unsigned int row, unsigned int col);
 void paint (unsigned int *buf, unsigned int color);
 
 /* Draws the pixel to the screen at position pos */
-void paint_pos (unsigned int *buf, unsigned int pos, unsigned int color);
+void paint_pos (unsigned int *buf, unsigned int row,
+                unsigned int col, unsigned int color);
 
 #endif

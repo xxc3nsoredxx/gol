@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 
 #include "color.h"
+#include "game.h"
 #include "input.h"
 #include "screen.h"
 
@@ -23,10 +24,12 @@
  *    unsigned int *fb;
  * };
  */
+extern unsigned int *next;
 extern struct screen_s screen;
 extern unsigned int scale;
 
 /* Global variables */
+/* Used as the game board */
 unsigned int *buf;
 volatile int quit;
 int key;
@@ -71,10 +74,17 @@ int main () {
         return -1;
     }
 
-    /* Attempt to create a temp screen buffer */
+    /* Attempt to create a game board */
     buf = calloc (screen.finfo.smem_len, 1);
     if (!buf) {
-        write (2, "Error creating temp buffer.\n", 28);
+        write (2, "Error creating game board.\n", 27);
+        munmap (screen.fb, screen.finfo.smem_len);
+        close (fb_file);
+        return -1;
+    }
+    next = calloc (screen.finfo.smem_len, 1);
+    if (!next) {
+        write (2, "Error creating next rounf.\n", 27);
         munmap (screen.fb, screen.finfo.smem_len);
         close (fb_file);
         return -1;
@@ -92,9 +102,13 @@ int main () {
 
     printw ("Instructions:\n");
     printw ("\tArrow keys to move the cursor.\n");
-    printw ("\tPress 'q' to quit.\n");
+    printw ("\tSpace to toggle cell.\n");
+    printw ("\t's' to step the game (when paused)\n");
+    printw ("\t'q' to quit.\n");
     printw ("Press any key to begin...");
     key = getch ();
+    clear ();
+    cursor_home ();
 
     quit = 0;
 
@@ -104,24 +118,23 @@ int main () {
     curs_color = GREEN;
 
     /* Testing purposes only!!! */
-    for (row = 0; row < 100 * (int)scale; row += scale) {
-        for (col = 0; col < 100 * (int)scale; col += scale) {
-            paint (buf, fg_color);
-        }
-    }
+    /* for (row = 0; row < 100 * (int)scale; row += scale) {
+     *     for (col = 0; col < 100 * (int)scale; col += scale) {
+     *         paint (buf, fg_color);
+     *     }
+     * }
+     */
     /* Copy buffer to screen */
-    memcpy (screen.fb, buf, screen.finfo.smem_len);
+    /* memcpy (screen.fb, buf, screen.finfo.smem_len); */
 
     /* Center the cursor */
     row = screen.height / 2;
     if (row % 2 == 1) row--;
     col = screen.width / 2;
     if (col % 2 == 1) col--;
-    paint (screen.fb, curs_color);
 
     /* Input loop */
-    /* TODO: Fix scaling wrap around bug */
-    start_input (bg_color, curs_color);
+    start_input (bg_color, fg_color, curs_color);
 
     /* Close ncurses */
     endwin ();
@@ -134,6 +147,7 @@ int main () {
 
     /* Close the framebuffer */
     free (buf);
+    free (next);
     munmap (screen.fb, screen.finfo.smem_len);
     close (fb_file);
 
