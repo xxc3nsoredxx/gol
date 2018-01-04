@@ -3,6 +3,10 @@
 
 #define ABS(X) (((X) < 0) ? (-1 * (X)) : (X))
 
+#define GREEN 0x00FF00
+#define WHITE 0xFFFFFF
+#define BLACK 0x000000
+
 /* Creates an rgb color from hsv values */
 unsigned int color (int h, float s, float v);
 

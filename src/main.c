@@ -1,34 +1,44 @@
+#include <curses.h>
 #include <fcntl.h>
-#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <linux/fb.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
-#include <sys/types.h>
 
 #include "color.h"
+#include "input.h"
 #include "screen.h"
 
+/* Used to scale the UI */
+#define SCALE 2
+
 /* Global variables from headers */
+/* struct screen_s {
+ *    struct fb_var_screeninfo info;
+ *    struct fb_fix_screeninfo finfo;
+ *    unsigned int width;
+ *    unsigned int height;
+ *    unsigned int *fb;
+ * };
+ */
 extern struct screen_s screen;
+extern unsigned int scale;
 
 /* Global variables */
-volatile sig_atomic_t interrupted = 0;
-
-void handler () {
-    interrupted = 1;
-}
+unsigned int *buf;
+volatile int quit;
+int key;
+unsigned int row;
+unsigned int col;
 
 int main () {
     int fb_file;
-    unsigned int *fb;
-    unsigned int *buf;
-    sigset_t mask;
-    struct sigaction usr_action;
-    int row;
-    int col;
+    WINDOW *main_win;
+    unsigned int fg_color;
+    unsigned int bg_color;
+    unsigned int curs_color;
 
     /* Attempt to open the framebuffer */
     fb_file = open ("/dev/fb0", O_RDWR);
@@ -48,11 +58,14 @@ int main () {
         close (fb_file);
         return -1;
     }
+    screen.width = screen.info.xres;
+    screen.height = screen.info.yres;
+    scale = SCALE;
 
     /* Attempt to mmap the framebuffer */
-    fb = mmap (0, screen.finfo.smem_len, PROT_READ|PROT_WRITE,
-               MAP_SHARED, fb_file, 0);
-    if ((long)fb == (long)MAP_FAILED) {
+    screen.fb = mmap (0, screen.finfo.smem_len, PROT_READ|PROT_WRITE,
+                      MAP_SHARED, fb_file, 0);
+    if ((long)screen.fb == (long)MAP_FAILED) {
         write (2, "Error mapping framebuffer to memory.\n", 37);
         close (fb_file);
         return -1;
@@ -62,42 +75,65 @@ int main () {
     buf = calloc (screen.finfo.smem_len, 1);
     if (!buf) {
         write (2, "Error creating temp buffer.\n", 28);
-        munmap (fb, screen.finfo.smem_len);
+        munmap (screen.fb, screen.finfo.smem_len);
         close (fb_file);
         return -1;
     }
 
-    /* Set up the SIGINT handler */
-    sigfillset (&mask);
-    usr_action.sa_handler = handler;
-    usr_action.sa_mask = mask;
-    usr_action.sa_flags = 0;
-    sigaction (SIGINT, &usr_action, NULL);
+    /* Start ncurses */
+    main_win = initscr ();
+    raw ();
+    noecho ();
+    keypad (main_win, TRUE);
 
     cursor_hide ();
     clear ();
     cursor_home ();
 
-    for (row = 0; row < 100; row += 1) {
-        for (col = 0; col < 100; col += 1) {
-            paint (buf, position (row, col), color (120, 1, 1));
+    printw ("Instructions:\n");
+    printw ("\tArrow keys to move the cursor.\n");
+    printw ("\tPress 'q' to quit.\n");
+    printw ("Press any key to begin...");
+    key = getch ();
+
+    quit = 0;
+
+    /* Initialize colors */
+    fg_color = WHITE;
+    bg_color = BLACK;
+    curs_color = GREEN;
+
+    /* Testing purposes only!!! */
+    for (row = 0; row < 100 * scale; row += scale) {
+        for (col = 0; col < 100 * scale; col += scale) {
+            paint (buf, fg_color);
         }
     }
     /* Copy buffer to screen */
-    memcpy (fb, buf, screen.finfo.smem_len);
+    memcpy (screen.fb, buf, screen.finfo.smem_len);
 
-    /* Wait for SIGINT */
-    while (!interrupted);
+    /* Center the cursor */
+    row = screen.height / 2;
+    col = screen.width / 2;
+    paint (screen.fb, curs_color);
+
+    /* Input loop */
+    /* TODO: Fix scaling wrap around bug */
+    start_input (bg_color, curs_color);
+
+    /* Close ncurses */
+    endwin ();
 
     /* Clear the screen */
-    memset (fb, 0, screen.finfo.smem_len);
+    memset (screen.fb, 0, screen.finfo.smem_len);
+    clear_text ();
+    cursor_home ();
+    cursor_show ();
 
     /* Close the framebuffer */
     free (buf);
-    munmap (fb, screen.finfo.smem_len);
+    munmap (screen.fb, screen.finfo.smem_len);
     close (fb_file);
-
-    cursor_show ();
 
     return 0;
 }
