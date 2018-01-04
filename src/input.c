@@ -8,8 +8,8 @@ extern unsigned int scale;
 extern unsigned int *buf;
 extern volatile int quit;
 extern int key;
-extern unsigned int row;
-extern unsigned int col;
+extern int row;
+extern int col;
 
 void start_input (unsigned int bg_color, unsigned int curs_color) {
     while (!quit) {
@@ -23,25 +23,25 @@ void start_input (unsigned int bg_color, unsigned int curs_color) {
             break;
         /* Move the cursor */
         case KEY_UP:
-            if (row > 0) {
+            if (row - (int)scale >= 0) {
                 paint (screen.fb, bg_color);
                 row -= scale;
             }
             break;
         case KEY_DOWN:
-            if (row < screen.height) {
+            if (row + scale < screen.height - scale) {
                 paint (screen.fb, bg_color);
                 row += scale;
             }
             break;
         case KEY_LEFT:
-            if (col > 0) {
+            if (col - (int)scale >= 0) {
                 paint (screen.fb, bg_color);
                 col -= scale;
             }
             break;
         case KEY_RIGHT:
-            if (col < screen.width) {
+            if (col + scale < screen.width - scale) {
                 paint (screen.fb, bg_color);
                 col += scale;
             }

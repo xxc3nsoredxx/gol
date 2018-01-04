@@ -30,8 +30,8 @@ extern unsigned int scale;
 unsigned int *buf;
 volatile int quit;
 int key;
-unsigned int row;
-unsigned int col;
+int row;
+int col;
 
 int main () {
     int fb_file;
@@ -99,13 +99,13 @@ int main () {
     quit = 0;
 
     /* Initialize colors */
-    fg_color = WHITE;
+    fg_color = LGRAY;
     bg_color = BLACK;
     curs_color = GREEN;
 
     /* Testing purposes only!!! */
-    for (row = 0; row < 100 * scale; row += scale) {
-        for (col = 0; col < 100 * scale; col += scale) {
+    for (row = 0; row < 100 * (int)scale; row += scale) {
+        for (col = 0; col < 100 * (int)scale; col += scale) {
             paint (buf, fg_color);
         }
     }
@@ -114,7 +114,9 @@ int main () {
 
     /* Center the cursor */
     row = screen.height / 2;
+    if (row % 2 == 1) row--;
     col = screen.width / 2;
+    if (col % 2 == 1) col--;
     paint (screen.fb, curs_color);
 
     /* Input loop */
