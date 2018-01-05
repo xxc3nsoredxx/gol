@@ -11,8 +11,7 @@ extern int row;
 extern int col;
 extern volatile int cont;
 
-int parse_input (unsigned int bg_color, unsigned int fg_color,
-                 unsigned int curs_color, int key) {
+int parse_input (unsigned int bg_color, unsigned int fg_color, int key) {
     int ret = 0;
 
     switch (key) {

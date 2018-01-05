@@ -157,7 +157,7 @@ int main () {
     if (thread == 0) {
         while (!quit) {
             key = getch ();
-            quit = parse_input (bg_color, fg_color, curs_color, key);
+            quit = parse_input (bg_color, fg_color, key);
         }
     }
     /* Build each frame */
