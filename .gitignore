@@ -1,5 +1,5 @@
 bin/
-!.keep
+!bin/.keep
 
 *.o
 *.exe
