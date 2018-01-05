@@ -38,23 +38,19 @@ unsigned int position () {
     return position_abs (row, col);
 }
 
-/* Turns row,col into an absolute position */
+/* Turns row/col into an absolute position */
 unsigned int position_abs (unsigned int row_p, unsigned int col_p) {
     unsigned int ll = screen.finfo.line_length;
     unsigned int bpp = screen.info.bits_per_pixel;
     return (row_p * (ll / (bpp / 8))) + col_p;
 }
 
-/* Draws the pixel using global vars row and col */
+/* Draws the (scaled) pixel using global vars row and col */
 void paint (unsigned int *buf, unsigned int color) {
     paint_pos (buf, row, col, color);
 }
 
-void draw (unsigned int *buf, unsigned int pos, unsigned int color) {
-    *(buf + pos) = color;
-}
-
-/* Draws the pixel to the screen at position pos */
+/* Draws the (scaled) pixel to the screen at position pos */
 void paint_pos (unsigned int *buf, unsigned int row,
                 unsigned int col, unsigned int color) {
     unsigned int d_row;
@@ -63,4 +59,9 @@ void paint_pos (unsigned int *buf, unsigned int row,
     for (d_row = 0; d_row < scale; d_row++)
         for (d_col = 0; d_col < scale; d_col++)
             draw (buf, position_abs (row + d_row, col + d_col), color);
+}
+
+/* Draws the (unscaled) pixel to the screen at position pos */
+void draw (unsigned int *buf, unsigned int pos, unsigned int color) {
+    *(buf + pos) = color;
 }

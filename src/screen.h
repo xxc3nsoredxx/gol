@@ -30,14 +30,17 @@ void clear_text ();
 /* Uses the global row/col to return a position */
 unsigned int position ();
 
-/* Turns row,col into an absolute position */
+/* Turns row/col into an absolute position */
 unsigned int position_abs (unsigned int row, unsigned int col);
 
-/* Draws the pixel using global vars row and col */
+/* Draws the (scaled) pixel using global vars row and col */
 void paint (unsigned int *buf, unsigned int color);
 
-/* Draws the pixel to the screen at position pos */
+/* Draws the (scaled) pixel to the screen at position pos */
 void paint_pos (unsigned int *buf, unsigned int row,
                 unsigned int col, unsigned int color);
+
+/* Draws the (unscaled) pixel to the screen at position pos */
+void draw (unsigned int *buf, unsigned int pos, unsigned int color);
 
 #endif

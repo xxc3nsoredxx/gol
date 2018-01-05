@@ -25,18 +25,16 @@
  *    unsigned int *fb;
  * };
  */
+extern unsigned int *game;
 extern unsigned int *next;
 extern struct screen_s screen;
 extern unsigned int scale;
+extern volatile int cont;
 
 /* Global variables */
-/* Used as the game board */
-unsigned int *buf;
 int row;
 int col;
 volatile int quit;
-/* Used to tell the game to proceed a generation */
-volatile int cont;
 
 int main () {
     int fb_file;
@@ -81,27 +79,29 @@ int main () {
     }
 
     /* Attempt to create a game board */
-    buf = calloc (screen.finfo.smem_len, 1);
-    if (!buf) {
+    game = calloc (screen.finfo.smem_len, 1);
+    if (!game) {
         write (2, "Error creating game board.\n", 27);
         munmap (screen.fb, screen.finfo.smem_len);
         close (fb_file);
         return -1;
     }
+    /* Attempt to create a buffer for the next generation */
     next = calloc (screen.finfo.smem_len, 1);
     if (!next) {
         write (2, "Error creating next round.\n", 27);
         munmap (screen.fb, screen.finfo.smem_len);
-        free (buf);
+        free (game);
         close (fb_file);
         return -1;
     }
+    /* Attempt to create a buffer to build each frame into */
     build = calloc (screen.finfo.smem_len, 1);
     if (!build) {
         write (2, "Error creating build buf.\n", 26);
         munmap (screen.fb, screen.finfo.smem_len);
         free (next);
-        free (buf);
+        free (game);
         close (fb_file);
         return -1;
     }
@@ -116,6 +116,7 @@ int main () {
     clear ();
     cursor_home ();
 
+    /* Print instructions */
     printw ("Instructions:\n");
     printw ("\tArrow keys to move the cursor.\n");
     printw ("\tSpace to toggle cell.\n");
@@ -132,23 +133,13 @@ int main () {
     bg_color = BLACK;
     curs_color = GREEN;
 
-    /* Testing purposes only!!! */
-    /* for (row = 0; row < 100 * (int)scale; row += scale) {
-     *     for (col = 0; col < 100 * (int)scale; col += scale) {
-     *         paint (buf, fg_color);
-     *     }
-     * }
-     */
-    /* Copy buffer to screen */
-    /* memcpy (screen.fb, buf, screen.finfo.smem_len); */
-
     /* Center the cursor */
     row = screen.height / 2;
     if (row % 2 == 1) row--;
     col = screen.width / 2;
     if (col % 2 == 1) col--;
 
-    #pragma omp parallel private(thread) shared(buf, quit, cont) num_threads(3)
+    #pragma omp parallel private(thread) shared(game, quit, cont) num_threads(3)
     {
     thread = omp_get_thread_num ();
     quit = 0;
@@ -164,7 +155,7 @@ int main () {
     if (thread == 1) {
         while (!quit) {
             memcpy (screen.fb, build, screen.finfo.smem_len);
-            memcpy (build, buf, screen.finfo.smem_len);
+            memcpy (build, game, screen.finfo.smem_len);
             paint (build, curs_color);
         }
     }
@@ -191,7 +182,7 @@ int main () {
     cursor_show ();
 
     /* Close the framebuffer */
-    free (buf);
+    free (game);
     free (next);
     free (build);
     munmap (screen.fb, screen.finfo.smem_len);

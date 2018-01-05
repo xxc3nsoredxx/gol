@@ -6,11 +6,13 @@
 #include "screen.h"
 
 extern unsigned int scale;
-extern unsigned int *buf;
+extern unsigned int *game;
+/* Cursor row and col */
 extern int row;
 extern int col;
 extern volatile int cont;
 
+/* Parse the input and return the quit status */
 int parse_input (unsigned int bg_color, unsigned int fg_color, int key) {
     int ret = 0;
 
@@ -40,21 +42,21 @@ int parse_input (unsigned int bg_color, unsigned int fg_color, int key) {
             col += scale;
         }
         break;
-    /* Toggle cell */
+    /* Toggle cell [space] */
     case ' ':
-        if (*(buf + position ()) == bg_color)
-            paint (buf, fg_color);
+        if (*(game + position ()) == bg_color)
+            paint (game, fg_color);
         else
-            paint (buf, bg_color);
+            paint (game, bg_color);
         break;
-    /* Play/pause */
+    /* Play/pause [return] */
     case '\n':
         if (cont != 2)
             cont = 2;
         else
             cont = 0;
         break;
-    /* Step */
+    /* Step (case insensitive) */
     case 's':
     case 'S':
         if (cont != 2)

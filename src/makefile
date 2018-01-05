@@ -1,4 +1,4 @@
-OBJS = main.o color.o game.o input.o screen.o
+OBJS = main.o game.o input.o screen.o
 CC = gcc
 CFLAGS = -Wall -Wextra -pedantic-errors -std=c89 -c
 LFLAGS = -lncurses
@@ -8,9 +8,6 @@ gol: $(OBJS)
 
 main.o: main.c color.h game.h input.h screen.h
 	$(CC) $(CFLAGS) main.c -o main.o -fopenmp
-
-color.o: color.c color.h
-	$(CC) $(CFLAGS) color.c -o color.o
 
 game.o: game.c game.h screen.h
 	$(CC) $(CFLAGS) game.c -o game.o
