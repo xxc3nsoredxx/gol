@@ -9,10 +9,10 @@ Requirements to run:
 
 * Be in the `video` group. If you're not, the following options can fix that:
 
-** `usermod -aG video oskari`
+    * `usermod -aG video oskari`
 
-** manually editing `/etc/group`
+    * manually editing `/etc/group`
 
-** NOTE: the above must be run as root.
+    * NOTE: the above must be run as root.
 
 * Run from the virtual console (for example TTY 2)
