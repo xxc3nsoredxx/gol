@@ -1,5 +1,6 @@
 #include <curses.h>
 #include <fcntl.h>
+#include <omp.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -31,17 +32,22 @@ extern unsigned int scale;
 /* Global variables */
 /* Used as the game board */
 unsigned int *buf;
-volatile int quit;
-int key;
 int row;
 int col;
+volatile int quit;
+/* Used to tell the game to proceed a generation */
+volatile int cont;
 
 int main () {
     int fb_file;
+    /* Used to build each frame */
+    unsigned int *build;
     WINDOW *main_win;
     unsigned int fg_color;
     unsigned int bg_color;
     unsigned int curs_color;
+    int key;
+    int thread;
 
     /* Attempt to open the framebuffer */
     fb_file = open ("/dev/fb0", O_RDWR);
@@ -84,8 +90,18 @@ int main () {
     }
     next = calloc (screen.finfo.smem_len, 1);
     if (!next) {
-        write (2, "Error creating next rounf.\n", 27);
+        write (2, "Error creating next round.\n", 27);
         munmap (screen.fb, screen.finfo.smem_len);
+        free (buf);
+        close (fb_file);
+        return -1;
+    }
+    build = calloc (screen.finfo.smem_len, 1);
+    if (!build) {
+        write (2, "Error creating build buf.\n", 26);
+        munmap (screen.fb, screen.finfo.smem_len);
+        free (next);
+        free (buf);
         close (fb_file);
         return -1;
     }
@@ -103,14 +119,13 @@ int main () {
     printw ("Instructions:\n");
     printw ("\tArrow keys to move the cursor.\n");
     printw ("\tSpace to toggle cell.\n");
+    printw ("\tEnter to play/pause\n");
     printw ("\t's' to step the game (when paused)\n");
     printw ("\t'q' to quit.\n");
     printw ("Press any key to begin...");
     key = getch ();
     clear ();
     cursor_home ();
-
-    quit = 0;
 
     /* Initialize colors */
     fg_color = LGRAY;
@@ -133,8 +148,38 @@ int main () {
     col = screen.width / 2;
     if (col % 2 == 1) col--;
 
+    #pragma omp parallel private(thread) shared(buf, quit, cont) num_threads(3)
+    {
+    thread = omp_get_thread_num ();
+    quit = 0;
+    cont = 0;
     /* Input loop */
-    start_input (bg_color, fg_color, curs_color);
+    if (thread == 0) {
+        while (!quit) {
+            key = getch ();
+            quit = parse_input (bg_color, fg_color, curs_color, key);
+        }
+    }
+    /* Build each frame */
+    if (thread == 1) {
+        while (!quit) {
+            memcpy (screen.fb, build, screen.finfo.smem_len);
+            memcpy (build, buf, screen.finfo.smem_len);
+            paint (build, curs_color);
+        }
+    }
+    /* Game loop */
+    else {
+        while (!quit) {
+            if (cont == 1) {
+                step (bg_color, fg_color);
+                cont = 0;
+            } else if (cont == 2) {
+                step (bg_color, fg_color);
+            }
+        }
+    }
+    }
 
     /* Close ncurses */
     endwin ();
@@ -148,6 +193,7 @@ int main () {
     /* Close the framebuffer */
     free (buf);
     free (next);
+    free (build);
     munmap (screen.fb, screen.finfo.smem_len);
     close (fb_file);
 

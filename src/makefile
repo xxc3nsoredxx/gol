@@ -4,10 +4,10 @@ CFLAGS = -Wall -Wextra -pedantic-errors -std=c89 -c
 LFLAGS = -lncurses
 
 gol: $(OBJS)
-	$(CC) $(OBJS) -o gol $(LFLAGS)
+	$(CC) $(OBJS) -o gol $(LFLAGS) -fopenmp
 
 main.o: main.c color.h game.h input.h screen.h
-	$(CC) $(CFLAGS) main.c -o main.o
+	$(CC) $(CFLAGS) main.c -o main.o -fopenmp
 
 color.o: color.c color.h
 	$(CC) $(CFLAGS) color.c -o color.o

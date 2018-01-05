@@ -5,6 +5,6 @@
 unsigned int *next;
 
 /* Steps through the game */
-void step ();
+void step (unsigned int bg_color, unsigned int fg_color);
 
 #endif
