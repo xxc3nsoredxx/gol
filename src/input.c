@@ -26,7 +26,7 @@ void start_input (unsigned bg_color, unsigned fg_color, unsigned curs_color) {
             }
             break;
         case KEY_DOWN:
-            if (row + scale < screen.height - scale) {
+            if (row + scale <= screen.height - scale) {
                 paint (screen.fb, bg_color);
                 row += scale;
             }
@@ -38,7 +38,7 @@ void start_input (unsigned bg_color, unsigned fg_color, unsigned curs_color) {
             }
             break;
         case KEY_RIGHT:
-            if (col + scale < screen.width - scale) {
+            if (col + scale <= screen.width - scale) {
                 paint (screen.fb, bg_color);
                 col += scale;
             }
