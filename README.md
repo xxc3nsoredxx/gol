@@ -9,7 +9,7 @@ Requirements to run:
 
 * Be in the `video` group. If you're not, the following options can fix that:
 
-    * `usermod -aG video oskari`
+    * `usermod -aG video [username]`
 
     * manually editing `/etc/group`
 
